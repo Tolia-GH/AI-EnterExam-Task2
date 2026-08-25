@@ -119,7 +119,7 @@ def classify_risk(text: str) -> str:
     return "safe"
 
 
-_TOKEN_RE = re.compile(r"[\u4e00-\u9fffA-Za-z0-9]+")
+_TOKEN_RE = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]")
 
 
 def _tokenize(text: str) -> set[str]:
@@ -182,6 +182,53 @@ def draft_reply(ticket: Ticket, topic: str, evidence: list[Evidence]) -> str:
     if topic == "payment":
         return f"已收到反馈。支付/资金问题需要人工核查以保证安全，请提供订单号与支付凭证后由专席处理。参考：{top}"
     return f"已收到反馈，我们会尽快协助处理。参考：{top}"
+
+
+def process_ticket(ticket: Ticket, kb_docs: list[dict]) -> tuple[Decision, AuditRecord]:
+    topic, confidence = classify_topic(ticket.text)
+    risk_level = classify_risk(ticket.text)
+    preferred_kb = [d for d in kb_docs if str(d.get("category", "")) == topic]
+    evidence = retrieve_topk(ticket.text, preferred_kb or kb_docs, k=3)
+    action, reason = decide_action(topic, risk_level, confidence)
+
+    draft: str | None = None
+    if action == "AUTO_SUGGEST":
+        draft = draft_reply(ticket, topic, evidence)
+
+    masked = mask_pii(ticket.text)
+    audit = AuditRecord(
+        audit_id=new_audit_id(),
+        timestamp=now_iso(),
+        ticket_id=ticket.ticket_id,
+        channel=ticket.channel,
+        input_text_masked=masked,
+        topic=topic,
+        risk_level=risk_level,
+        confidence=confidence,
+        action=action,
+        reason=reason,
+        evidence=[
+            {"source": e.source, "doc_id": e.doc_id, "title": e.title, "score": e.score}
+            for e in evidence
+        ],
+        versions={
+            "system": config.SYSTEM_NAME,
+            "policy": config.POLICY_VERSION,
+            "classifier": config.CLASSIFIER_VERSION,
+            "retrieval": config.RETRIEVAL_VERSION,
+        },
+        errors=None,
+    )
+    decision = Decision(
+        topic=topic,
+        risk_level=risk_level,
+        confidence=confidence,
+        action=action,
+        reason=reason,
+        draft_reply=draft,
+        evidence=evidence,
+    )
+    return decision, audit
 
 
 def append_audit_record(path: str | Path, record: AuditRecord) -> None:
