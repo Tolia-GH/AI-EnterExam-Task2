@@ -46,14 +46,14 @@ def main() -> None:
             "--port",
             str(args.port),
         ]
-        _log("INFO", "supervisor", f"启动服务: host={args.host}; port={args.port}; restarts={restarts}")
+        _log("INFO", "supervisor", f"Service starting: host={args.host}; port={args.port}; restarts={restarts}")
         p = subprocess.Popen(cmd, cwd=str(project_root))
         code = p.wait()
         restarts += 1
-        _log("ERROR", "supervisor", f"服务退出: exit_code={code}; 将尝试重启")
+        _log("ERROR", "supervisor", f"Service exited: exit_code={code}; restart_scheduled=true")
         time.sleep(max(0, args.restart_delay_ms) / 1000.0)
 
-    _log("ERROR", "supervisor", "超过最大重启次数: status=stopped")
+    _log("ERROR", "supervisor", "Max restarts exceeded: status=stopped")
     raise SystemExit(1)
 
 

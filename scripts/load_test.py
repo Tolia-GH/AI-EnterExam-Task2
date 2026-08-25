@@ -48,8 +48,8 @@ def worker(api_base: str, n: int, idx: int, timeout_s: float, results: dict) -> 
             "ticket_id": tid,
             "channel": "load_test",
             "submitter": "load_test",
-            "title": "压测工单",
-            "description": "订单一直显示骑手已取餐但很久没动了，怎么催单？",
+            "title": "Load test ticket",
+            "description": "Order shows the courier picked up the food but the location has not updated for a long time. How can I expedite the delivery?",
         }
         ok = False
         for _ in range(3):
@@ -67,7 +67,7 @@ def worker(api_base: str, n: int, idx: int, timeout_s: float, results: dict) -> 
 
 def main() -> None:
     args = parse_args()
-    _log("INFO", "load_test", f"开始压测: threads={args.threads}; per_thread={args.tickets_per_thread}")
+    _log("INFO", "load_test", f"Load test started: threads={args.threads}; per_thread={args.tickets_per_thread}")
     t0 = time.time()
     threads = []
     results = {"ok": 0, "fail": 0}
@@ -86,7 +86,7 @@ def main() -> None:
     _log(
         "INFO",
         "load_test",
-        f"压测完成: total={total}; ok={results['ok']}; fail={results['fail']}; seconds={dt:.3f}; qps={results['ok']/max(dt,1e-6):.2f}",
+        f"Load test finished: total={total}; ok={results['ok']}; fail={results['fail']}; seconds={dt:.3f}; qps={results['ok']/max(dt,1e-6):.2f}",
     )
 
 

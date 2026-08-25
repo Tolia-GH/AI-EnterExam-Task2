@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from . import config
-from .model_client import TopicClassifierClient, TopicModelResult
+from runtime_config import load_runtime_config
+from service.model_infer import LocalNBTopicModel
 
 
 @dataclass(frozen=True)
@@ -88,7 +89,33 @@ def contains_pii(text: str) -> bool:
     return bool(_PHONE_RE.search(text) or _EMAIL_RE.search(text) or _CARD_RE.search(text))
 
 
-def classify_topic(text: str) -> tuple[str, float]:
+_NB_MODEL: LocalNBTopicModel | None = None
+_NB_MODEL_ERROR: str | None = None
+
+
+def _get_nb_model() -> LocalNBTopicModel | None:
+    global _NB_MODEL
+    global _NB_MODEL_ERROR
+
+    if _NB_MODEL is not None:
+        return _NB_MODEL
+    if _NB_MODEL_ERROR is not None:
+        return None
+
+    rc = load_runtime_config()
+    model_path = rc.local_topic_model_path
+    try:
+        if model_path.exists():
+            _NB_MODEL = LocalNBTopicModel(model_path)
+            return _NB_MODEL
+        _NB_MODEL_ERROR = f"missing_model_file={model_path.as_posix()}"
+        return None
+    except Exception as e:
+        _NB_MODEL_ERROR = f"nb_model_load_error={type(e).__name__}: {e}"
+        return None
+
+
+def _classify_topic_rule(text: str) -> tuple[str, float]:
     scores: dict[str, int] = {}
     for topic, keywords in config.TOPIC_KEYWORDS.items():
         scores[topic] = sum(1 for kw in keywords if kw in text)
@@ -110,6 +137,24 @@ def classify_topic(text: str) -> tuple[str, float]:
     margin = best_score - second_score
     confidence = min(1.0, 0.5 + 0.2 * best_score + 0.1 * margin)
     return best_topic, float(confidence)
+
+
+def classify_topic(text: str) -> tuple[str, float, str, list[str]]:
+    errors: list[str] = []
+    model = _get_nb_model()
+    if model is not None:
+        try:
+            topic, confidence = model.predict(mask_pii(text))
+            if topic not in config.TOPIC_KEYWORDS and topic != "other":
+                topic = "other"
+            return topic, float(confidence), f"local_nb:{model.version}", errors
+        except Exception as e:
+            errors.append(f"nb_infer_error={type(e).__name__}: {e}")
+
+    if _NB_MODEL_ERROR:
+        errors.append(_NB_MODEL_ERROR)
+    topic, confidence = _classify_topic_rule(text)
+    return topic, float(confidence), "rule_fallback", errors
 
 
 def classify_risk(text: str) -> str:
@@ -173,48 +218,35 @@ def decide_action(topic: str, risk_level: str, confidence: float) -> tuple[str, 
 
 
 def draft_reply(ticket: Ticket, topic: str, evidence: list[Evidence]) -> str:
-    top = evidence[0].title if evidence else "相关帮助文档"
+    top = evidence[0].title if evidence else "a relevant help article"
     if topic == "order_delivery":
-        return f"已收到反馈。建议先在订单页点击“联系骑手/催单”，若长时间无更新可在售后入口发起申诉。参考：{top}"
+        return (
+            "We have received your request. Please check the order page and try contacting the courier. "
+            f"If there is no progress for a long time, please open an after-sales request. Reference: {top}"
+        )
     if topic == "after_sales":
-        return f"已收到反馈。可在订单页进入“售后/退款”提交申请，我们会根据订单状态与商家反馈处理。参考：{top}"
+        return (
+            "We have received your request. Please submit an after-sales/refund request from the order page. "
+            f"We will handle it based on order status and merchant feedback. Reference: {top}"
+        )
     if topic == "account":
-        return f"已收到反馈。可在“账号与安全”中修改信息或发起找回申诉；若疑似被盗请优先修改密码并开启安全验证。参考：{top}"
+        return (
+            "We have received your request. Please update your account details in the security settings. "
+            f"If you suspect account compromise, reset your password immediately. Reference: {top}"
+        )
     if topic == "payment":
-        return f"已收到反馈。支付/资金问题需要人工核查以保证安全，请提供订单号与支付凭证后由专席处理。参考：{top}"
-    return f"已收到反馈，我们会尽快协助处理。参考：{top}"
-
-
-def _classify_topic_with_model(
-    model_client: TopicClassifierClient | None,
-    ticket: Ticket,
-) -> tuple[str, float, str, list[str]]:
-    errors: list[str] = []
-
-    if model_client is None:
-        topic, confidence = classify_topic(ticket.text)
-        return topic, confidence, "rule", errors
-
-    masked = mask_pii(ticket.text)
-    meta = {
-        "channel": ticket.channel,
-        "has_order_id": bool(ticket.order_id),
-    }
-    try:
-        r: TopicModelResult = model_client.classify(masked, meta=meta)
-        return r.topic, r.confidence, f"model:{r.model_version}", errors
-    except Exception as e:
-        errors.append(f"topic_model_error={type(e).__name__}: {e}")
-        topic, confidence = classify_topic(ticket.text)
-        return topic, confidence, "rule_fallback", errors
+        return (
+            "We have received your request. Payment-related issues require human review for safety. "
+            f"Please provide the order ID and payment proof. Reference: {top}"
+        )
+    return f"We have received your request and will assist you shortly. Reference: {top}"
 
 
 def process_ticket(
     ticket: Ticket,
     kb_docs: list[dict],
-    model_client: TopicClassifierClient | None = None,
 ) -> tuple[Decision, AuditRecord]:
-    topic, confidence, topic_source, errors = _classify_topic_with_model(model_client, ticket)
+    topic, confidence, topic_source, errors = classify_topic(ticket.text)
     risk_level = classify_risk(ticket.text)
     preferred_kb = [d for d in kb_docs if str(d.get("category", "")) == topic]
     evidence = retrieve_topk(ticket.text, preferred_kb or kb_docs, k=3)

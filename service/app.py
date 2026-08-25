@@ -65,7 +65,7 @@ def create_ticket(req: TicketCreateRequest) -> TicketResponse:
             description=req.description,
             status="NEW",
         )
-        insert_event(con, req.ticket_id, "INFO", "api", "工单创建")
+        insert_event(con, req.ticket_id, "INFO", "api", "Ticket created")
         con.commit()
         row = con.execute("SELECT * FROM tickets WHERE ticket_id=?", (req.ticket_id,)).fetchone()
         assert row is not None

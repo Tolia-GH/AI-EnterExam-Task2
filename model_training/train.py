@@ -190,16 +190,16 @@ def main() -> None:
     out_model_path = _resolve_path(args.out_model)
     out_report_path = _resolve_path(args.out_report)
 
-    log(enabled_level, "INFO", "train", f"训练启动: data={data_path.as_posix()}; seed={args.seed}")
+    log(enabled_level, "INFO", "train", f"Training started: data={data_path.as_posix()}; seed={args.seed}")
     examples = load_dataset(data_path)
-    log(enabled_level, "INFO", "train", f"数据加载完成: samples={len(examples)}")
+    log(enabled_level, "INFO", "train", f"Dataset loaded: samples={len(examples)}")
 
     train_set, val_set, test_set = split_dataset(examples, seed=args.seed)
     log(
         enabled_level,
         "INFO",
         "train",
-        f"数据切分完成: train={len(train_set)}; val={len(val_set)}; test={len(test_set)}",
+        f"Dataset split: train={len(train_set)}; val={len(val_set)}; test={len(test_set)}",
     )
 
     candidates = [0.5, 1.0, 2.0]
@@ -226,7 +226,7 @@ def main() -> None:
         enabled_level,
         "INFO",
         "export",
-        f"模型已导出: path={out_model_path.as_posix()}; version={best['model_version']}",
+        f"Model exported: path={out_model_path.as_posix()}; version={best['model_version']}",
     )
 
     report = {
@@ -240,8 +240,8 @@ def main() -> None:
     }
     out_report_path.parent.mkdir(parents=True, exist_ok=True)
     out_report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    log(enabled_level, "INFO", "export", f"训练报告已导出: path={out_report_path.as_posix()}")
-    log(enabled_level, "INFO", "train", "训练完成: status=success")
+    log(enabled_level, "INFO", "export", f"Training report exported: path={out_report_path.as_posix()}")
+    log(enabled_level, "INFO", "train", "Training finished: status=success")
 
 
 if __name__ == "__main__":
