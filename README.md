@@ -59,9 +59,9 @@ python main.py
 
 ## Документация
 
-- [architecture.md](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/docs/architecture.md)
-- [ml.md](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/docs/ml.md)
-- [monitoring.md](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/docs/monitoring.md)
-- [risks-and-ops.md](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/docs/risks-and-ops.md)
-- [AI_USAGE.md](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/AI_USAGE.md)
-- [SELF_REVIEW.md](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/SELF_REVIEW.md)
+- [architecture.md](docs/architecture.md)
+- [ml.md](docs/ml.md)
+- [monitoring.md](docs/monitoring.md)
+- [risks-and-ops.md](docs/risks-and-ops.md)
+- [AI_USAGE.md](AI_USAGE.md)
+- [SELF_REVIEW.md](SELF_REVIEW.md)
