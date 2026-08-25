@@ -19,8 +19,40 @@ python main.py
 ```
 
 Ожидаемый результат:
-- В консоли выводится обработка 2 mock-тикетов (happy + risky/fallback)
-- В конце сохраняется/печатается лог принятого решения (audit trail)
+- В консоли выводятся стандартизованные workflow-логи (без печати JSON/объектов)
+- Формируется файл аудита `logs/audit.jsonl` (по 1 строке JSONL на тикет)
+
+## Модельная классификация (локально)
+
+По умолчанию PoC использует правила. Опционально можно обучить и подключить локальную модель для topic classification.
+
+### 1) Обучение модели
+
+```bash
+python model_training/train.py
+```
+
+Артефакты:
+- `model_service/model.json` — обученная модель (минимальный Multinomial NB)
+- `model_training/training_report.json` — метрики train/val/test
+
+### 2) Запуск модели как сервиса
+
+```bash
+python model_service/server.py --host 127.0.0.1 --port 8001
+```
+
+Health-check:
+- `GET http://127.0.0.1:8001/health`
+
+Inference:
+- `POST http://127.0.0.1:8001/classify` с JSON `{"text":"...","meta":{...}}`
+
+### 3) Подключение сервиса к PoC
+
+```bash
+python main.py --classifier-url http://127.0.0.1:8001
+```
 
 ## Какой сценарий демонстрируется
 

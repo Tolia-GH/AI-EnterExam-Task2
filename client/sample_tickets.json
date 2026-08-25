@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "template_id": "tpl_delivery",
+      "channel": "app",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "submitter": "simulator"
+    },
+    {
+      "template_id": "tpl_payment",
+      "channel": "web",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "submitter": "simulator"
+    },
+    {
+      "template_id": "tpl_after_sales",
+      "channel": "mini_program",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "submitter": "simulator"
+    },
+    {
+      "template_id": "tpl_account",
+      "channel": "app",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "submitter": "simulator"
+    }
+  ],
+  "tickets": [],
+  "pending": [],
+  "stats": {
+    "submitted": 0,
+    "template_cursor": 0
+  }
+}
+

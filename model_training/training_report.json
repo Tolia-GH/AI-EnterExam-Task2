@@ -1,0 +1,29 @@
+{
+  "data": "C:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/data/labeled_tickets.csv",
+  "seed": 42,
+  "best_alpha": 0.5,
+  "val_metrics": {
+    "accuracy": 0.75,
+    "recall": {
+      "account": 1.0,
+      "after_sales": 0.0,
+      "order_delivery": 0.6666666666666666,
+      "other": 0.0,
+      "payment": 0.0
+    },
+    "total": 4
+  },
+  "test_metrics": {
+    "accuracy": 0.8333333333333334,
+    "recall": {
+      "account": 0.0,
+      "after_sales": 0.0,
+      "order_delivery": 1.0,
+      "other": 1.0,
+      "payment": 0.6666666666666666
+    },
+    "total": 6
+  },
+  "model_path": "C:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/model_service/model.json",
+  "model_version": "nb-20260825-223305"
+}

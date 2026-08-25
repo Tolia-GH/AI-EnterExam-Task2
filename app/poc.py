@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from . import config
+from .model_client import TopicClassifierClient, TopicModelResult
 
 
 @dataclass(frozen=True)
@@ -184,8 +185,36 @@ def draft_reply(ticket: Ticket, topic: str, evidence: list[Evidence]) -> str:
     return f"已收到反馈，我们会尽快协助处理。参考：{top}"
 
 
-def process_ticket(ticket: Ticket, kb_docs: list[dict]) -> tuple[Decision, AuditRecord]:
-    topic, confidence = classify_topic(ticket.text)
+def _classify_topic_with_model(
+    model_client: TopicClassifierClient | None,
+    ticket: Ticket,
+) -> tuple[str, float, str, list[str]]:
+    errors: list[str] = []
+
+    if model_client is None:
+        topic, confidence = classify_topic(ticket.text)
+        return topic, confidence, "rule", errors
+
+    masked = mask_pii(ticket.text)
+    meta = {
+        "channel": ticket.channel,
+        "has_order_id": bool(ticket.order_id),
+    }
+    try:
+        r: TopicModelResult = model_client.classify(masked, meta=meta)
+        return r.topic, r.confidence, f"model:{r.model_version}", errors
+    except Exception as e:
+        errors.append(f"topic_model_error={type(e).__name__}: {e}")
+        topic, confidence = classify_topic(ticket.text)
+        return topic, confidence, "rule_fallback", errors
+
+
+def process_ticket(
+    ticket: Ticket,
+    kb_docs: list[dict],
+    model_client: TopicClassifierClient | None = None,
+) -> tuple[Decision, AuditRecord]:
+    topic, confidence, topic_source, errors = _classify_topic_with_model(model_client, ticket)
     risk_level = classify_risk(ticket.text)
     preferred_kb = [d for d in kb_docs if str(d.get("category", "")) == topic]
     evidence = retrieve_topk(ticket.text, preferred_kb or kb_docs, k=3)
@@ -214,10 +243,11 @@ def process_ticket(ticket: Ticket, kb_docs: list[dict]) -> tuple[Decision, Audit
         versions={
             "system": config.SYSTEM_NAME,
             "policy": config.POLICY_VERSION,
+            "topic_classifier": topic_source,
             "classifier": config.CLASSIFIER_VERSION,
             "retrieval": config.RETRIEVAL_VERSION,
         },
-        errors=None,
+        errors=errors or None,
     )
     decision = Decision(
         topic=topic,

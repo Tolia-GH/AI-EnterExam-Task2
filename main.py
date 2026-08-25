@@ -23,10 +23,12 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from app.model_client import TopicClassifierClient
 from app.poc import append_audit_record, load_kb, normalize_ticket, process_ticket
 
 
 _LEVELS = {"DEBUG": 10, "INFO": 20, "WARN": 30, "ERROR": 40}
+_PROJECT_ROOT = Path(__file__).resolve().parent
 
 
 def _now() -> str:
@@ -48,6 +50,13 @@ def _log(enabled_level_value: int, level: str, module: str, message: str) -> Non
     print(f"[{_now()}] [{level}] [{module}] {message}")
 
 
+def _resolve_path(p: str) -> Path:
+    path = Path(p)
+    if path.is_absolute():
+        return path
+    return (_PROJECT_ROOT / path).resolve()
+
+
 def parse_args() -> argparse.Namespace:
     """
     解析命令行参数。
@@ -62,6 +71,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--kb", default="data/kb.json")
     parser.add_argument("--audit", default="logs/audit.jsonl")
     parser.add_argument("--log-level", default=None)
+    parser.add_argument("--classifier-url", default=None)
+    parser.add_argument("--classifier-timeout-ms", type=int, default=300)
     return parser.parse_args()
 
 
@@ -87,25 +98,41 @@ def main() -> None:
     env_level = os.getenv("LOG_LEVEL", "INFO")
     enabled_level_value = _get_level_value(args.log_level or env_level)
 
+    tickets_path = _resolve_path(args.tickets)
+    kb_path = _resolve_path(args.kb)
+    audit_path = _resolve_path(args.audit)
+
     _log(
         enabled_level_value,
         "INFO",
         "main",
-        f"程序启动: tickets={args.tickets}; kb={args.kb}; audit={args.audit}; log_level={args.log_level or env_level}",
+        "程序启动: "
+        f"tickets={tickets_path.as_posix()}; kb={kb_path.as_posix()}; audit={audit_path.as_posix()}; "
+        f"log_level={args.log_level or env_level}; classifier_url={args.classifier_url or '-'}",
     )
 
     try:
-        _log(enabled_level_value, "INFO", "loader", f"加载KB: path={args.kb}")
-        kb_docs = load_kb(args.kb)
+        _log(enabled_level_value, "INFO", "loader", f"加载KB: path={kb_path.as_posix()}")
+        kb_docs = load_kb(kb_path)
         _log(enabled_level_value, "INFO", "loader", f"KB加载完成: docs={len(kb_docs)}")
 
-        _log(enabled_level_value, "INFO", "loader", f"加载工单样例: path={args.tickets}")
-        raw_tickets = json.loads(Path(args.tickets).read_text(encoding="utf-8"))
+        _log(enabled_level_value, "INFO", "loader", f"加载工单样例: path={tickets_path.as_posix()}")
+        raw_tickets = json.loads(tickets_path.read_text(encoding="utf-8"))
         _log(enabled_level_value, "INFO", "loader", f"工单样例加载完成: tickets={len(raw_tickets)}")
 
-        audit_path = Path(args.audit)
         _log(enabled_level_value, "DEBUG", "audit", f"初始化审计日志文件: path={audit_path.as_posix()}")
         safe_unlink(audit_path)
+
+        model_client = None
+        if args.classifier_url:
+            timeout_s = max(1, args.classifier_timeout_ms) / 1000.0
+            model_client = TopicClassifierClient(args.classifier_url, timeout_s=timeout_s)
+            _log(
+                enabled_level_value,
+                "INFO",
+                "model",
+                f"主题分类模型已启用: url={args.classifier_url}; timeout_ms={args.classifier_timeout_ms}",
+            )
 
         for idx, raw in enumerate(raw_tickets, start=1):
             ticket = normalize_ticket(raw)
@@ -117,7 +144,7 @@ def main() -> None:
             )
 
             try:
-                decision, audit = process_ticket(ticket, kb_docs)
+                decision, audit = process_ticket(ticket, kb_docs, model_client=model_client)
             except Exception as e:
                 _log(
                     enabled_level_value,
@@ -158,6 +185,14 @@ def main() -> None:
                 "audit",
                 f"审计记录已写入: ticket_id={ticket.ticket_id}; audit_id={audit.audit_id}; path={audit_path.as_posix()}",
             )
+
+            if audit.errors:
+                _log(
+                    enabled_level_value,
+                    "WARN",
+                    "model",
+                    f"模型调用发生降级: ticket_id={ticket.ticket_id}; details={'; '.join(audit.errors)}",
+                )
 
         _log(enabled_level_value, "INFO", "main", f"程序退出: status=success; audit_log={audit_path.as_posix()}")
     except Exception as e:

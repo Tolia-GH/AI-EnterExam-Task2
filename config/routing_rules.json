@@ -1,0 +1,23 @@
+{
+  "queues": {
+    "ROUTE_TO_HUMAN_GENERAL": {
+      "name": "通用人工队列"
+    },
+    "ROUTE_TO_HUMAN_PAYMENT": {
+      "name": "支付专席"
+    },
+    "ROUTE_TO_HUMAN_AFTER_SALES": {
+      "name": "售后专席"
+    },
+    "ROUTE_TO_HUMAN_ACCOUNT_SECURITY": {
+      "name": "账号安全专席"
+    }
+  },
+  "topic_to_queue": {
+    "order_delivery": "ROUTE_TO_HUMAN_GENERAL",
+    "payment": "ROUTE_TO_HUMAN_PAYMENT",
+    "after_sales": "ROUTE_TO_HUMAN_AFTER_SALES",
+    "account": "ROUTE_TO_HUMAN_ACCOUNT_SECURITY",
+    "other": "ROUTE_TO_HUMAN_GENERAL"
+  }
+}
