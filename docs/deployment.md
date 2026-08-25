@@ -1,5 +1,19 @@
 # Развёртывание и запуск (backend + модель + desktop client)
 
+## 0) Единая конфигурация (рекомендуется)
+
+Все основные параметры (host/port, api_base, пути к файлам и пороги) читаются из `config/runtime.json`.
+
+Если нужно использовать другой конфиг, задайте переменную окружения `RUNTIME_CONFIG`:
+
+```bash
+# Linux/macOS
+export RUNTIME_CONFIG=config/runtime.json
+
+# Windows PowerShell
+$env:RUNTIME_CONFIG="config/runtime.json"
+```
+
 ## 1) Установка зависимостей
 
 ```bash
@@ -23,7 +37,7 @@ python model_training/train.py --log-level INFO
 Рекомендуемый способ — запуск через supervisor (если uvicorn-процесс падает, он будет поднят снова):
 
 ```bash
-python service/supervisor.py --host 127.0.0.1 --port 18000
+python service/supervisor.py
 ```
 
 Основные REST/SSE endpoints:
@@ -39,7 +53,7 @@ python service/supervisor.py --host 127.0.0.1 --port 18000
 ## 4) Запуск desktop client (Windows/macOS)
 
 ```bash
-python client/desktop_client.py --api-base http://127.0.0.1:18000 --gen-per-min 30
+python client/desktop_client.py
 ```
 
 Что делает клиент:
@@ -51,7 +65,7 @@ python client/desktop_client.py --api-base http://127.0.0.1:18000 --gen-per-min 
 ## 5) Нагрузочная проверка (эмуляция высоких объёмов)
 
 ```bash
-python scripts/load_test.py --api-base http://127.0.0.1:18000 --threads 10 --tickets-per-thread 50
+python scripts/load_test.py
 ```
 
 ## 6) (Опционально) Подключение внешнего LLM для topic classification

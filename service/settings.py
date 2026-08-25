@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from runtime_config import load_runtime_config
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -20,16 +22,17 @@ class Settings:
 
 def load_settings() -> Settings:
     project_root = Path(__file__).resolve().parent.parent
+    rc = load_runtime_config()
 
-    db_path = Path(os.getenv("TICKET_DB_PATH", str(project_root / "data" / "tickets.db")))
+    db_path = Path(os.getenv("TICKET_DB_PATH", str(rc.db_path)))
     if not db_path.is_absolute():
         db_path = (project_root / db_path).resolve()
 
-    routing_rules_path = Path(os.getenv("ROUTING_RULES_PATH", str(project_root / "config" / "routing_rules.json")))
+    routing_rules_path = Path(os.getenv("ROUTING_RULES_PATH", str(rc.routing_rules_path)))
     if not routing_rules_path.is_absolute():
         routing_rules_path = (project_root / routing_rules_path).resolve()
 
-    model_local_path = Path(os.getenv("LOCAL_TOPIC_MODEL_PATH", str(project_root / "model_service" / "model.json")))
+    model_local_path = Path(os.getenv("LOCAL_TOPIC_MODEL_PATH", str(rc.local_topic_model_path)))
     if not model_local_path.is_absolute():
         model_local_path = (project_root / model_local_path).resolve()
 
@@ -37,10 +40,10 @@ def load_settings() -> Settings:
     llm_api_key = os.getenv("LLM_API_KEY")
     llm_model = os.getenv("LLM_MODEL")
 
-    topic_confidence_threshold = float(os.getenv("TOPIC_CONFIDENCE_THRESHOLD", "0.7"))
+    topic_confidence_threshold = float(os.getenv("TOPIC_CONFIDENCE_THRESHOLD", str(rc.topic_confidence_threshold)))
     auto_close_topics = set(
         t.strip()
-        for t in os.getenv("AUTO_CLOSE_TOPICS", "order_delivery").split(",")
+        for t in os.getenv("AUTO_CLOSE_TOPICS", ",".join(rc.auto_close_topics)).split(",")
         if t.strip()
     )
 

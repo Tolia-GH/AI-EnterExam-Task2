@@ -1,0 +1,16 @@
+{
+  "backend_host": "127.0.0.1",
+  "backend_port": 18000,
+  "api_base": "http://127.0.0.1:18000",
+  "topic_confidence_threshold": 0.7,
+  "auto_close_topics": ["order_delivery"],
+  "db_path": "data/tickets.db",
+  "routing_rules_path": "config/routing_rules.json",
+  "local_topic_model_path": "model_service/model.json",
+  "client_sample_tickets_path": "client/sample_tickets.json",
+  "poc_tickets_path": "data/sample_tickets.json",
+  "kb_path": "data/kb.json",
+  "audit_path": "logs/audit.jsonl",
+  "client_gen_per_min": 30
+}
+

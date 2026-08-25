@@ -25,6 +25,7 @@ from pathlib import Path
 
 from app.model_client import TopicClassifierClient
 from app.poc import append_audit_record, load_kb, normalize_ticket, process_ticket
+from runtime_config import load_runtime_config
 
 
 _LEVELS = {"DEBUG": 10, "INFO": 20, "WARN": 30, "ERROR": 40}
@@ -66,10 +67,11 @@ def parse_args() -> argparse.Namespace:
     - --audit: 审计日志输出路径（JSONL）
     - --log-level: 日志级别（覆盖 LOG_LEVEL 环境变量）
     """
+    rc = load_runtime_config()
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tickets", default="data/sample_tickets.json")
-    parser.add_argument("--kb", default="data/kb.json")
-    parser.add_argument("--audit", default="logs/audit.jsonl")
+    parser.add_argument("--tickets", default=str(rc.poc_tickets_path))
+    parser.add_argument("--kb", default=str(rc.kb_path))
+    parser.add_argument("--audit", default=str(rc.audit_path))
     parser.add_argument("--log-level", default=None)
     parser.add_argument("--classifier-url", default=None)
     parser.add_argument("--classifier-timeout-ms", type=int, default=300)

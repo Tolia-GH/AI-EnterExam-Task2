@@ -8,6 +8,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from runtime_config import load_runtime_config
+
 
 def _now() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
@@ -18,9 +20,10 @@ def _log(level: str, module: str, message: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    rc = load_runtime_config()
     p = argparse.ArgumentParser()
-    p.add_argument("--host", default="127.0.0.1")
-    p.add_argument("--port", type=int, default=18000)
+    p.add_argument("--host", default=rc.backend_host)
+    p.add_argument("--port", type=int, default=rc.backend_port)
     p.add_argument("--restart-delay-ms", type=int, default=1000)
     p.add_argument("--max-restarts", type=int, default=100)
     return p.parse_args()
@@ -56,4 +59,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

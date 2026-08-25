@@ -13,6 +13,10 @@
 Требования:
 - Python 3.11+
 
+Глобальная конфигурация:
+- По умолчанию параметры берутся из `config/runtime.json` (порт, пути, пороги).
+- Можно переопределить конфиг через переменную окружения `RUNTIME_CONFIG` (путь до JSON), а также через CLI-аргументы конкретных программ.
+
 ### 1) Установка зависимостей
 
 ```bash
@@ -30,13 +34,13 @@ python model_training/train.py --log-level INFO
 ### 3) Запустить backend как демон (с автоперезапуском)
 
 ```bash
-python service/supervisor.py --host 127.0.0.1 --port 18000
+python service/supervisor.py
 ```
 
 ### 4) Запустить desktop client
 
 ```bash
-python client/desktop_client.py --api-base http://127.0.0.1:18000 --gen-per-min 30
+python client/desktop_client.py
 ```
 
 Ожидаемый результат:

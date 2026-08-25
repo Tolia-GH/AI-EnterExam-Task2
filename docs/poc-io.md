@@ -6,7 +6,7 @@
 
 ## 1) Входы для консольного PoC-пайплайна
 
-Файл: [data/sample_tickets.json](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/data/sample_tickets.json)
+Файл: [data/sample_tickets.json](../data/sample_tickets.json)
 
 Пример 1 (happy / safe):
 - Пользователь просит подсказать, как действовать при задержке доставки.
@@ -18,7 +18,7 @@
 
 ## 2) Входы для desktop client (генератор)
 
-Файл: [client/sample_tickets.json](file:///c:/Users/Tolia/Documents/GitHub/AI-EnterExam-Task2/client/sample_tickets.json)
+Файл: [client/sample_tickets.json](../client/sample_tickets.json)
 
 Разделы:
 - `templates` — шаблоны, из которых клиент генерирует тикеты

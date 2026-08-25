@@ -9,6 +9,8 @@ import urllib.request
 import uuid
 from datetime import datetime
 
+from runtime_config import load_runtime_config
+
 
 def _now() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
@@ -19,8 +21,9 @@ def _log(level: str, module: str, message: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    rc = load_runtime_config()
     p = argparse.ArgumentParser()
-    p.add_argument("--api-base", default="http://127.0.0.1:8000")
+    p.add_argument("--api-base", default=rc.api_base)
     p.add_argument("--threads", type=int, default=10)
     p.add_argument("--tickets-per-thread", type=int, default=50)
     return p.parse_args()

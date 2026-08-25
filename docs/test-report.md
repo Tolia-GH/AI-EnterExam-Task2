@@ -65,9 +65,9 @@
 
 ```bash
 python model_training/train.py --log-level INFO
-python service/supervisor.py --host 127.0.0.1 --port 18000
-python client/desktop_client.py --api-base http://127.0.0.1:18000 --gen-per-min 30
-python scripts/load_test.py --api-base http://127.0.0.1:18000 --threads 10 --tickets-per-thread 50
+python service/supervisor.py
+python client/desktop_client.py
+python scripts/load_test.py
 ```
 
 ### 5.2 Результаты

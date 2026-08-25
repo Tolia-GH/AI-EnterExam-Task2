@@ -26,6 +26,7 @@ from client.sample_tickets_store import (
     save_store,
     update_ticket_status,
 )
+from runtime_config import load_runtime_config
 from client.forms import (
     FieldDef,
     FormDef,
@@ -66,11 +67,16 @@ class ClientSettings:
 
 
 def parse_args() -> argparse.Namespace:
+    rc = load_runtime_config()
+    try:
+        default_sample_tickets = rc.client_sample_tickets_path.relative_to(rc.project_root).as_posix()
+    except Exception:
+        default_sample_tickets = str(rc.client_sample_tickets_path)
     p = argparse.ArgumentParser()
-    p.add_argument("--api-base", default="http://127.0.0.1:18000")
+    p.add_argument("--api-base", default=rc.api_base)
     p.add_argument("--cache", default="client/cache.db")
-    p.add_argument("--sample-tickets", default="client/sample_tickets.json")
-    p.add_argument("--gen-per-min", type=int, default=30)
+    p.add_argument("--sample-tickets", default=default_sample_tickets)
+    p.add_argument("--gen-per-min", type=int, default=rc.client_gen_per_min)
     return p.parse_args()
 
 
