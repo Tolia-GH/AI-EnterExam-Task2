@@ -3,10 +3,10 @@
 ## 1) Какие задачи решает система
 
 Минимальный набор:
-- Topic classification: определить тему/категорию тикета.
-- Risk classification: определить риск (safe/risky/unknown) для выбора режима обработки.
-- Retrieval: найти похожие тикеты или фрагменты базы знаний (KB) для обоснования решения.
-- Answer drafting (опционально, асинхронно): сформировать черновик ответа с опорой на evidence.
+- Topic classification: определить тему/категорию тикета (order_delivery/payment/after_sales/account/other).
+- Risk classification: определить риск (safe/risky) для выбора режима обработки.
+- Routing: на основе topic+risk+confidence выбрать очередь и режим (auto-resolve vs human-in-the-loop).
+- Retrieval и drafting описаны как целевой дизайн (в текущем PoC не являются основным фокусом).
 
 ## 2) Почему такой стек: правила vs ML vs embeddings/RAG vs LLM
 
@@ -43,23 +43,23 @@
 
 ## 3) Baseline’ы, которые разумно запустить первыми
 
-- Baseline A (rule-based): правила/ключевые слова + пороги confidence.
-- Baseline B (classic ML): TF-IDF + linear classifier для topic.
-- Baseline C (embeddings): retrieval по небольшому KB/историческим тикетам.
+- Baseline A (rule-based): риск-политики (hard gate) + деградация по confidence.
+- Baseline B (classic ML, реализовано): Multinomial Naive Bayes для topic classification на размеченных тикетах.
+- Baseline C (опционально): внешний LLM-классификатор (OpenAI-compatible) с fallback на локальную модель.
 
 ## 4) Данные: откуда берутся и как размечаются
 
 Источники:
-- Исторические тикеты + финальная категория/результат обработки (label).
-- База знаний (статьи, FAQ) с версиями и метаданными.
+- Исторические тикеты + финальная очередь/категория обработки (label).
+- Для PoC: небольшой размеченный датасет `data/labeled_tickets.csv`.
 
-Разметка:
-- [ ] Кто размечает (операторы/аннотаторы/ML):
-- [ ] Схема разметки (категории, риск-лейблы, причины):
-- [ ] Контроль качества разметки (IAA, spot-check, guidelines):
+Разметка (целевой процесс):
+- Размечают операторы/аннотаторы на основании “куда реально ушёл тикет” + spot-check ML-инженером.
+- Схема: `topic_label` (один из 5 классов) + `risk_label` (safe/risky) + (опц.) reason codes.
+- Контроль: guidelines, выборочная перепроверка, измерение согласия (IAA) для сложных кейсов.
 
 PII:
-- [ ] Как обеспечивается маскирование/удаление PII для обучения:
+- Перед использованием данных для обучения PII маскируется (телефон/почта/карта), а также сохраняются структурные флаги (например, `has_phone=true`) при необходимости.
 
 ## 5) Валидация качества и метрики
 
@@ -75,20 +75,21 @@ Online (в пилоте):
 
 ## 6) Низкая уверенность (low-confidence) и политика решений
 
-- Порог(и) confidence:
-  - [ ] topic_conf_threshold =
-  - [ ] risk_conf_threshold =
-- Правило:
-  - если уверенность ниже порога → route-to-human
-  - если признаки prompt injection / PII violation → route-to-human
+Пороги confidence (PoC):
+- `topic_conf_threshold`: конфигурируемый порог в routing policy (если ниже — эскалация в `PENDING_REVIEW`).
+- Risk решается правилами (hard gate): если тикет относится к платежам/безопасности или содержит PII/триггеры — только оператор.
+
+Правило:
+- если `confidence < topic_conf_threshold` → `PENDING_REVIEW` (ручная обработка)
+- если `risky` по политике → `PENDING_REVIEW` независимо от confidence
 
 ## 7) Контур улучшения (feedback loop)
 
 - Сохраняем:
-  - финальные решения оператора (approve/edit)
-  - причины отказов/эскалаций
-  - outcome-метрики (reopen, CSAT)
+  - финальные статусы тикета и фактическую очередь
+  - причины эскалаций (low-confidence / risk policy)
+  - технические метрики (latency/error/fallback)
 - Используем:
   - для обновления правил
   - для переобучения моделей
-  - для обновления KB и retrieval-индекса
+  - для обновления схемы классов/маршрутизации и (в будущем) KB/retrieval

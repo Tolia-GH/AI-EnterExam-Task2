@@ -1,4 +1,4 @@
-# architecture.md — целевая архитектура
+# architecture.md — архитектура решения
 
 ## 1) Цель системы
 
@@ -6,7 +6,7 @@
 - Сохранить безопасность и качество: рискованные/неуверенные случаи — только через оператора.
 - Обеспечить аудит: каждое автоматическое решение воспроизводимо и логируется.
 
-## 2) Основные компоненты
+## 2) Основные компоненты (как в целевом продукте)
 
 - Ingestion (каналы): чат / email / web / mobile → нормализация в единый формат Ticket.
 - PII/Safety фильтр: детект и маскирование PII, policy-валидация, защита от prompt-injection (на уровне контента).
@@ -21,6 +21,17 @@
   - Audit Log (неизменяемые логи решений)
 - Human-in-the-loop UI/Queue: очередь операторов, интерфейс подтверждения/редактирования.
 - Monitoring/Analytics: метрики, алерты, дашборды, контроль LLM cost.
+
+## 2.1) Что реализовано в этом репозитории (PoC as-built)
+
+- Backend service: FastAPI-приложение, принимающее тикеты по REST и раздающее события по SSE.
+- Worker: фоновая обработка тикетов (topic classification → risk policy → routing → авто-завершение или эскалация).
+- Storage: SQLite (`data/tickets.db`) для тикетов и истории событий.
+- Model inference:
+  - по умолчанию: локальная NB-модель (`model_service/model.json`)
+  - опционально: внешний OpenAI-compatible LLM для topic classification (с деградацией на локальную модель)
+- Desktop client (Tkinter): генератор тикетов из `client/sample_tickets.json` + офлайн очередь (`pending`) + допередача + UI-статистика.
+- Supervisor: простой “watchdog” для автоперезапуска backend-процесса.
 
 ## 3) Поток данных (end-to-end)
 
@@ -66,24 +77,32 @@
 
 ```mermaid
 flowchart LR
-  A[Channels: chat/email/web/app] --> B[Ingestion + Normalization]
-  B --> C[PII & Safety Filter]
-  C --> D[Fast Classifier: topic/risk/conf]
-  D --> E[Retrieval: KB/Ticket Similarity]
-  E --> F[Decision Engine]
-  F -->|safe| G[Suggest/Auto Response]
-  F -->|risky or low conf| H[Human Queue]
-  G --> I[(Ticket Store)]
-  H --> I
-  F --> J[(Audit Log)]
-  G --> J
-  H --> J
-  G --> K[Async Worker: LLM/RAG]
-  K --> J
+  A[Desktop client / API caller] --> B[REST: POST /tickets]
+  B --> C[(SQLite: tickets + events)]
+  B --> D[Worker loop]
+  D --> E[PII mask + risk signals]
+  E --> F[Topic classifier (NB / LLM fallback)]
+  F --> G[Routing policy]
+  G -->|safe| H[Auto-resolve]
+  G -->|risky/low conf| I[Escalate (PENDING_REVIEW)]
+  H --> C
+  I --> C
+  C --> J[SSE: GET /events]
+  J --> A
 ```
 
 ## 7) Assumptions и границы PoC
 
-- [ ] Какие компоненты реально реализованы в PoC:
-- [ ] Какие компоненты описаны только как дизайн:
-- [ ] Целевые SLO/SLA и пороги confidence (и почему такие):
+- Реально реализовано:
+  - REST API + состояние тикета (`NEW/PROCESSING/RESOLVED/PENDING_REVIEW`)
+  - topic classification (локальная NB, опционально внешний LLM) с confidence
+  - risk policy (правила), деградация в `PENDING_REVIEW` при risk/low-confidence
+  - журнал событий (SSE) и персистентность в SQLite
+  - desktop client с генерацией и офлайн-очередью
+- Только дизайн (не реализовано полностью):
+  - полноценный retrieval/RAG по базе знаний и векторному индексу
+  - полноценная MLOps-инфраструктура (registry, canary, drift detection в проде)
+  - интеграция с промышленным HelpDesk/CRM (webhooks, IAM, RBAC)
+- Пороги и SLO (PoC):
+  - цель hot path: p95 < 500 ms (в PoC оценивается по логам и локальному запуску)
+  - `confidence_threshold`: конфигурируемый порог, ниже которого тикет эскалируется оператору
