@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from app.poc import classify_risk, mask_pii
 
 from .db import DB, insert_event, update_ticket_processing
-from .model_infer import LocalNBTopicModel, OpenAICompatibleLLMTopicClassifier, infer_topic
+from .model_infer import LocalNBTopicModel, OpenAICompatibleLLMResponder, infer_topic
 from .routing import RoutingRules, route
 from .settings import Settings
 
@@ -59,8 +59,12 @@ def _select_pending(con: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
 
 def _auto_receipt(topic: str) -> str:
     if topic == "order_delivery":
-        return "系统已自动处理：已为你生成催单/异常配送处理指引，如仍未解决将转人工跟进。"
-    return "系统已自动处理：已生成处理回执。"
+        return (
+            "We have processed your request automatically. "
+            "Please try checking the latest delivery status and contacting the courier in the app. "
+            "If the issue persists, we will escalate it for human follow-up."
+        )
+    return "We have processed your request automatically. A support receipt has been generated."
 
 
 class TicketWorker:
@@ -73,9 +77,9 @@ class TicketWorker:
         self._thread: threading.Thread | None = None
 
         self._local_model = LocalNBTopicModel(settings.model_local_path)
-        self._llm = None
+        self._responder = None
         if settings.llm_base_url and settings.llm_api_key and settings.llm_model:
-            self._llm = OpenAICompatibleLLMTopicClassifier(
+            self._responder = OpenAICompatibleLLMResponder(
                 base_url=settings.llm_base_url,
                 api_key=settings.llm_api_key,
                 model=settings.llm_model,
@@ -113,14 +117,13 @@ class TicketWorker:
                     text = f"{title}\n{desc}"
                     text_masked = mask_pii(text)
 
-                    insert_event(con, ticket_id, "INFO", "worker", "开始处理工单")
+                    insert_event(con, ticket_id, "INFO", "worker", "Ticket processing started")
                     con.commit()
 
                     topic_res = infer_topic(
                         text_masked=text_masked,
                         labels=["order_delivery", "payment", "after_sales", "account", "other"],
                         local_model=self._local_model,
-                        llm=self._llm,
                     )
 
                     risk = classify_risk(text)
@@ -128,6 +131,7 @@ class TicketWorker:
 
                     status = "PROCESSING"
                     receipt = None
+                    receipt_source = "none"
                     if risk == "risky":
                         status = "PENDING_REVIEW"
                     elif topic_res.confidence < self._settings.topic_confidence_threshold:
@@ -135,6 +139,15 @@ class TicketWorker:
                     elif topic_res.topic in self._settings.auto_close_topics:
                         status = "RESOLVED"
                         receipt = _auto_receipt(topic_res.topic)
+                        receipt_source = "template"
+                        if self._responder is not None:
+                            try:
+                                rr = self._responder.generate_reply(text_masked=text_masked, topic=topic_res.topic)
+                                if rr.reply.strip():
+                                    receipt = rr.reply
+                                    receipt_source = rr.source
+                            except Exception:
+                                receipt_source = "template_fallback"
                     else:
                         status = "PENDING_REVIEW"
 
@@ -163,13 +176,14 @@ class TicketWorker:
                         ticket_id,
                         "INFO" if status == "RESOLVED" else ("WARN" if status == "PENDING_REVIEW" else "INFO"),
                         "worker",
-                        "处理完成: "
+                        "Ticket processed: "
                         f"topic={topic_res.topic}; conf={topic_res.confidence:.4f}; "
-                        f"risk={risk}; route={route_action}; status={status}; source={topic_res.source}; reason={','.join(reason)}",
+                        f"risk={risk}; route={route_action}; status={status}; source={topic_res.source}; "
+                        f"receipt_source={receipt_source}; reason={','.join(reason)}",
                     )
                     con.commit()
 
                     ts = str(con.execute("SELECT updated_at FROM tickets WHERE ticket_id=?", (ticket_id,)).fetchone()[0])
-                    self._emit(ticket_id, ts, "INFO", "worker", f"状态更新: status={status}; route={route_action}")
+                    self._emit(ticket_id, ts, "INFO", "worker", f"Status updated: status={status}; route={route_action}")
             finally:
                 con.close()

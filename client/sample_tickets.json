@@ -30,11 +30,381 @@
       "submitter": "simulator"
     }
   ],
-  "tickets": [],
+  "tickets": [
+    {
+      "ticket_id": "SIM-d5cd06ee2e",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:33:12+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:13+03:00"
+    },
+    {
+      "ticket_id": "SIM-0215357fe9",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:33:15+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:15+03:00"
+    },
+    {
+      "ticket_id": "SIM-192215f9b9",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:33:17+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:17+03:00"
+    },
+    {
+      "ticket_id": "SIM-80631730a6",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:33:19+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:19+03:00"
+    },
+    {
+      "ticket_id": "SIM-635c02b437",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:33:21+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:21+03:00"
+    },
+    {
+      "ticket_id": "SIM-d8ca6e039e",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:33:23+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:23+03:00"
+    },
+    {
+      "ticket_id": "SIM-560f3c5ff8",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:33:25+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:25+03:00"
+    },
+    {
+      "ticket_id": "SIM-4cb5c3ed4e",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:33:27+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:27+03:00"
+    },
+    {
+      "ticket_id": "SIM-22c24fd599",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:33:29+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:29+03:00"
+    },
+    {
+      "ticket_id": "SIM-4afa99c8cc",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:33:31+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:31+03:00"
+    },
+    {
+      "ticket_id": "SIM-e493ada54c",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:33:33+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:33+03:00"
+    },
+    {
+      "ticket_id": "SIM-82102b2da7",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:33:35+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:35+03:00"
+    },
+    {
+      "ticket_id": "SIM-800620eb12",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:33:37+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:37+03:00"
+    },
+    {
+      "ticket_id": "SIM-a4fad193c5",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:33:39+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:39+03:00"
+    },
+    {
+      "ticket_id": "SIM-11d437d38c",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:33:41+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:41+03:00"
+    },
+    {
+      "ticket_id": "SIM-790f6ff70d",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:33:43+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:43+03:00"
+    },
+    {
+      "ticket_id": "SIM-0bb10cbe3a",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:33:45+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:45+03:00"
+    },
+    {
+      "ticket_id": "SIM-67d136e99c",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:33:47+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:47+03:00"
+    },
+    {
+      "ticket_id": "SIM-17f403f2ec",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:33:49+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:49+03:00"
+    },
+    {
+      "ticket_id": "SIM-3b75d8eac2",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:33:51+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:51+03:00"
+    },
+    {
+      "ticket_id": "SIM-51c26384fe",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:33:53+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:54+03:00"
+    },
+    {
+      "ticket_id": "SIM-cd0240a5da",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:33:55+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:55+03:00"
+    },
+    {
+      "ticket_id": "SIM-5e9f45ef09",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:33:57+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:58+03:00"
+    },
+    {
+      "ticket_id": "SIM-48183ac6eb",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:33:59+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:33:59+03:00"
+    },
+    {
+      "ticket_id": "SIM-19ce4b6e25",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:34:01+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:34:02+03:00"
+    },
+    {
+      "ticket_id": "SIM-9649ecc58f",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:34:03+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:34:04+03:00"
+    },
+    {
+      "ticket_id": "SIM-3dacb0b38a",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:34:05+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:34:06+03:00"
+    },
+    {
+      "ticket_id": "SIM-24cb02814d",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:34:07+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:34:08+03:00"
+    },
+    {
+      "ticket_id": "SIM-29728ab6b9",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:34:09+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:34:10+03:00"
+    },
+    {
+      "ticket_id": "SIM-05ae13cc7a",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:34:12+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:34:12+03:00"
+    },
+    {
+      "ticket_id": "SIM-7613e0864a",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:34:14+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:34:14+03:00"
+    },
+    {
+      "ticket_id": "SIM-f5d523c422",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:35:42+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:35:42+03:00"
+    },
+    {
+      "ticket_id": "SIM-24bf02ffea",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:35:44+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:35:44+03:00"
+    },
+    {
+      "ticket_id": "SIM-1b8b339538",
+      "channel": "web",
+      "submitter": "simulator",
+      "title": "Payment issue",
+      "description": "I was charged twice and the order was canceled. I need a refund as soon as possible.",
+      "created_at": "2026-08-25T23:35:46+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:35:46+03:00"
+    },
+    {
+      "ticket_id": "SIM-2ef82cde58",
+      "channel": "mini_program",
+      "submitter": "simulator",
+      "title": "After-sales request",
+      "description": "My meal was missing items / damaged. How can I request compensation?",
+      "created_at": "2026-08-25T23:35:48+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:35:48+03:00"
+    },
+    {
+      "ticket_id": "SIM-56d0b46ab1",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Account problem",
+      "description": "I forgot my password and cannot sign in. How can I recover my account?",
+      "created_at": "2026-08-25T23:35:50+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:35:50+03:00"
+    },
+    {
+      "ticket_id": "SIM-2b0c864418",
+      "channel": "app",
+      "submitter": "simulator",
+      "title": "Delivery delay",
+      "description": "The courier picked up the order but has not moved for 40 minutes. How can I urge the delivery?",
+      "created_at": "2026-08-25T23:35:52+03:00",
+      "status": "PENDING_REVIEW",
+      "updated_at": "2026-08-25T23:35:52+03:00"
+    }
+  ],
   "pending": [],
   "stats": {
-    "submitted": 0,
-    "template_cursor": 0
+    "submitted": 37,
+    "template_cursor": 37
   }
 }
-

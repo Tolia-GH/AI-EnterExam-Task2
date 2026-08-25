@@ -6,7 +6,7 @@
 - Topic classification: определить тему/категорию тикета (order_delivery/payment/after_sales/account/other).
 - Risk classification: определить риск (safe/risky) для выбора режима обработки.
 - Routing: на основе topic+risk+confidence выбрать очередь и режим (auto-resolve vs human-in-the-loop).
-- Retrieval и drafting описаны как целевой дизайн (в текущем PoC не являются основным фокусом).
+- Retrieval описан как целевой дизайн; drafting/receipt generation реализованы в упрощённом виде (шаблоны и опционально LLM).
 
 ## 2) Почему такой стек: правила vs ML vs embeddings/RAG vs LLM
 
@@ -45,7 +45,7 @@
 
 - Baseline A (rule-based): риск-политики (hard gate) + деградация по confidence.
 - Baseline B (classic ML, реализовано): Multinomial Naive Bayes для topic classification на размеченных тикетах.
-- Baseline C (опционально): внешний LLM-классификатор (OpenAI-compatible) с fallback на локальную модель.
+- Baseline C (опционально): внешний OpenAI-compatible LLM для генерации текста ответа (receipt/draft) с fallback на локальные шаблоны.
 
 ## 4) Данные: откуда берутся и как размечаются
 

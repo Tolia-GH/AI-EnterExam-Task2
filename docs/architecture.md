@@ -28,8 +28,8 @@
 - Worker: фоновая обработка тикетов (topic classification → risk policy → routing → авто-завершение или эскалация).
 - Storage: SQLite (`data/tickets.db`) для тикетов и истории событий.
 - Model inference:
-  - по умолчанию: локальная NB-модель (`model_service/model.json`)
-  - опционально: внешний OpenAI-compatible LLM для topic classification (с деградацией на локальную модель)
+  - topic classification: локальная NB-модель (`model_service/model.json`)
+  - response generation (опционально): внешний OpenAI-compatible LLM для генерации текста ответа/квитанции (PII masked, fallback на шаблоны)
 - Desktop client (Tkinter): генератор тикетов из `client/sample_tickets.json` + офлайн очередь (`pending`) + допередача + UI-статистика.
 - Supervisor: простой “watchdog” для автоперезапуска backend-процесса.
 
@@ -81,11 +81,12 @@ flowchart LR
   B --> C[(SQLite: tickets + events)]
   B --> D[Worker loop]
   D --> E[PII mask + risk signals]
-  E --> F[Topic classifier (NB / LLM fallback)]
+  E --> F[Topic classifier (NB)]
   F --> G[Routing policy]
   G -->|safe| H[Auto-resolve]
   G -->|risky/low conf| I[Escalate (PENDING_REVIEW)]
-  H --> C
+  H --> K[Reply generator (LLM optional)]
+  K --> C
   I --> C
   C --> J[SSE: GET /events]
   J --> A
@@ -95,7 +96,7 @@ flowchart LR
 
 - Реально реализовано:
   - REST API + состояние тикета (`NEW/PROCESSING/RESOLVED/PENDING_REVIEW`)
-  - topic classification (локальная NB, опционально внешний LLM) с confidence
+  - topic classification (локальная NB) с confidence
   - risk policy (правила), деградация в `PENDING_REVIEW` при risk/low-confidence
   - журнал событий (SSE) и персистентность в SQLite
   - desktop client с генерацией и офлайн-очередью

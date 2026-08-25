@@ -69,25 +69,42 @@ class LocalNBTopicModel:
         return topic, float(conf)
 
 
-class OpenAICompatibleLLMTopicClassifier:
+@dataclass(frozen=True)
+class ReplyResult:
+    reply: str
+    source: str
+    latency_ms: int
+
+
+class OpenAICompatibleLLMResponder:
     def __init__(self, base_url: str, api_key: str, model: str, timeout_s: float):
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
         self._model = model
         self._timeout_s = timeout_s
 
-    def classify(self, text: str, labels: list[str]) -> tuple[str, float]:
-        prompt = (
-            "你是工单主题分类器。仅输出JSON，键为topic与confidence。\n"
-            f"可选topic：{labels}\n"
-            "confidence取0到1。\n"
-            f"工单内容：{text}\n"
-        )
+    @property
+    def model(self) -> str:
+        return self._model
 
+    def generate_reply(self, text_masked: str, topic: str) -> ReplyResult:
+        t0 = time.time()
+        prompt = "\n".join(
+            [
+                "You are a customer support agent for a food delivery platform.",
+                "Generate a concise and professional reply to the user ticket in English.",
+                "Do not ask for sensitive information (password, full card number, OTP).",
+                "If the issue requires a human agent, say that it has been escalated for review.",
+                f"Topic: {topic}",
+                "",
+                "Ticket (PII masked):",
+                text_masked,
+            ]
+        )
         payload = {
             "model": self._model,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0,
+            "temperature": 0.2,
         }
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         req = urllib.request.Request(
@@ -102,33 +119,23 @@ class OpenAICompatibleLLMTopicClassifier:
         with urllib.request.urlopen(req, timeout=self._timeout_s) as resp:
             raw = resp.read().decode("utf-8")
         out = json.loads(raw)
-        content = out["choices"][0]["message"]["content"]
-        parsed = json.loads(content)
-        topic = str(parsed.get("topic", "other"))
-        confidence = float(parsed.get("confidence", 0.0))
-        return topic, confidence
+        content = str(out["choices"][0]["message"]["content"]).strip()
+        return ReplyResult(
+            reply=content,
+            source=f"llm:{self._model}",
+            latency_ms=int((time.time() - t0) * 1000),
+        )
 
 
 def infer_topic(
     text_masked: str,
     labels: list[str],
     local_model: LocalNBTopicModel,
-    llm: OpenAICompatibleLLMTopicClassifier | None,
 ) -> TopicResult:
     t0 = time.time()
-    if llm is not None:
-        try:
-            topic, conf = llm.classify(text_masked, labels=labels)
-            return TopicResult(
-                topic=topic if topic in labels else "other",
-                confidence=max(0.0, min(1.0, conf)),
-                source=f"llm:{llm._model}",
-                latency_ms=int((time.time() - t0) * 1000),
-            )
-        except Exception:
-            pass
-
     topic, conf = local_model.predict(text_masked)
+    if topic not in labels:
+        topic = "other"
     return TopicResult(
         topic=topic,
         confidence=max(0.0, min(1.0, conf)),
