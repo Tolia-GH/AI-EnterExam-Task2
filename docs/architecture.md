@@ -77,19 +77,23 @@
 
 ```mermaid
 flowchart LR
-  A[Desktop client or API caller] --> B[REST: POST /tickets]
-  B --> C[SQLite: tickets and events]
-  B --> D[Worker loop]
-  D --> E[PII mask + risk signals]
-  E --> F[Topic classifier (NB)]
-  F --> G[Routing policy]
-  G -->|safe| H[Auto-resolve]
-  G -->|risky or low confidence| I[Escalate to PENDING_REVIEW]
-  H --> K[Reply generator (LLM optional)]
-  K --> C
-  I --> C
-  C --> J[SSE: GET /events]
-  J --> A
+    A["Desktop client or API caller"] --> B["REST: POST /tickets"]
+    B --> C["SQLite: tickets and events"]
+    B --> D["Worker loop"]
+
+    D --> E["PII mask + risk signals"]
+    E --> F["Topic classifier (NB)"]
+    F --> G["Routing policy"]
+
+    G -->|safe| H["Auto-resolve"]
+    G -->|risky or low confidence| I["Escalate to PENDING_REVIEW"]
+
+    H --> K["Reply generator (LLM optional)"]
+    K --> C
+    I --> C
+
+    C --> J["SSE: GET /events"]
+    J --> A
 ```
 
 ## 7) Assumptions и границы PoC
