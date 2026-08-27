@@ -76,7 +76,7 @@
 ## 6) Диаграммы (Mermaid)
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Desktop client or API caller"] --> B["REST: POST /tickets"]
     B --> C["SQLite: tickets and events"]
     B --> D["Worker loop"]
