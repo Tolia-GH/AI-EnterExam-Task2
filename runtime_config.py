@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+"""
+Unified runtime configuration loader.
+
+This module provides a single source of truth for runtime parameters used across
+the PoC CLI, backend service, desktop client, and helper scripts.
+
+Configuration precedence:
+1) Built-in defaults (safe for local demos)
+2) JSON config file (default: config/runtime.json)
+3) Config file override via the RUNTIME_CONFIG environment variable
+
+All relative paths in the config file are resolved relative to the project root.
+"""
+
 import json
 import os
 from dataclasses import dataclass
@@ -9,6 +23,8 @@ from typing import Any
 
 @dataclass(frozen=True)
 class RuntimeConfig:
+    """Typed configuration snapshot resolved for the current process."""
+
     project_root: Path
     backend_host: str
     backend_port: int
@@ -26,11 +42,15 @@ class RuntimeConfig:
 
 
 def _deep_get(d: dict[str, Any], key: str, default: Any) -> Any:
+    """Get a key from a dict but treat None as missing (fall back to default)."""
+
     v = d.get(key, default)
     return default if v is None else v
 
 
 def _resolve(project_root: Path, p: str) -> Path:
+    """Resolve an absolute/relative path string into an absolute Path."""
+
     path = Path(p)
     if path.is_absolute():
         return path
@@ -38,6 +58,8 @@ def _resolve(project_root: Path, p: str) -> Path:
 
 
 def _default_dict(project_root: Path) -> dict[str, Any]:
+    """Return default config values for a given project root."""
+
     backend_host = "127.0.0.1"
     backend_port = 18000
     return {
@@ -58,6 +80,14 @@ def _default_dict(project_root: Path) -> dict[str, Any]:
 
 
 def load_runtime_config() -> RuntimeConfig:
+    """
+    Load and resolve runtime configuration.
+
+    The loader never raises if the config file is missing; it falls back to
+    built-in defaults. If the config file exists but is invalid, defaults are
+    used as well.
+    """
+
     project_root = Path(__file__).resolve().parent
     default_path = project_root / "config" / "runtime.json"
     cfg_path = Path(os.getenv("RUNTIME_CONFIG", str(default_path)))
@@ -98,4 +128,3 @@ def load_runtime_config() -> RuntimeConfig:
         audit_path=_resolve(project_root, str(_deep_get(d, "audit_path", "logs/audit.jsonl"))),
         client_gen_per_min=max(1, int(_deep_get(d, "client_gen_per_min", 30))),
     )
-

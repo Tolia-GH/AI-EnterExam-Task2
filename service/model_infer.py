@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+"""
+Model inference utilities for the backend service.
+
+This module contains:
+- LocalNBTopicModel: lightweight topic classifier for the hot path
+- infer_topic(): adapter that returns a typed TopicResult with latency/source fields
+- OpenAICompatibleLLMResponder: optional external LLM integration used only for
+  response generation (slow path), with PII masked inputs and fallback handled by the caller
+"""
+
 import json
 import math
 import time
@@ -9,6 +19,8 @@ from pathlib import Path
 
 
 def tokenize(text: str) -> list[str]:
+    """Tokenize Latin alnum words and CJK characters for the NB model."""
+
     tokens: list[str] = []
     buff: list[str] = []
     for ch in text:
@@ -28,6 +40,8 @@ def tokenize(text: str) -> list[str]:
 
 @dataclass(frozen=True)
 class TopicResult:
+    """Topic inference result returned to the caller."""
+
     topic: str
     confidence: float
     source: str
@@ -35,15 +49,21 @@ class TopicResult:
 
 
 class LocalNBTopicModel:
+    """Local Multinomial Naive Bayes topic model loaded from a JSON artifact."""
+
     def __init__(self, model_path: Path):
         self._model_path = model_path
         self._model = json.loads(model_path.read_text(encoding="utf-8"))
 
     @property
     def version(self) -> str:
+        """Model version string stored in the artifact."""
+
         return str(self._model.get("model_version", "unknown"))
 
     def predict(self, text: str) -> tuple[str, float]:
+        """Predict (topic, confidence) for a given masked text input."""
+
         labels: list[str] = self._model["labels"]
         alpha: float = float(self._model["alpha"])
         priors: dict[str, float] = self._model["priors"]
@@ -71,12 +91,16 @@ class LocalNBTopicModel:
 
 @dataclass(frozen=True)
 class ReplyResult:
+    """Response generation result with metadata for observability."""
+
     reply: str
     source: str
     latency_ms: int
 
 
 class OpenAICompatibleLLMResponder:
+    """OpenAI-compatible chat completion client used for response generation."""
+
     def __init__(self, base_url: str, api_key: str, model: str, timeout_s: float):
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
@@ -85,9 +109,13 @@ class OpenAICompatibleLLMResponder:
 
     @property
     def model(self) -> str:
+        """Configured model id (provider specific)."""
+
         return self._model
 
     def generate_reply(self, text_masked: str, topic: str) -> ReplyResult:
+        """Generate a short English reply for a masked ticket text."""
+
         t0 = time.time()
         prompt = "\n".join(
             [
@@ -132,6 +160,8 @@ def infer_topic(
     labels: list[str],
     local_model: LocalNBTopicModel,
 ) -> TopicResult:
+    """Infer topic for masked text using the local NB model."""
+
     t0 = time.time()
     topic, conf = local_model.predict(text_masked)
     if topic not in labels:

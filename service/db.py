@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+"""
+SQLite persistence layer.
+
+This module owns:
+- schema initialization (tickets + ticket_events)
+- minimal helper functions for inserting tickets and events
+- updating tickets after processing
+"""
+
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -7,20 +16,28 @@ from pathlib import Path
 
 
 def now_iso() -> str:
+    """Return an ISO-8601 timestamp in UTC."""
+
     return datetime.now(timezone.utc).isoformat()
 
 
 @dataclass(frozen=True)
 class DB:
+    """SQLite DB handle that produces connections with Row factory enabled."""
+
     path: Path
 
     def connect(self) -> sqlite3.Connection:
+        """Create a SQLite connection usable across threads."""
+
         con = sqlite3.connect(str(self.path), check_same_thread=False)
         con.row_factory = sqlite3.Row
         return con
 
 
 def init_db(db: DB) -> None:
+    """Create tables and indexes if they do not exist."""
+
     db.path.parent.mkdir(parents=True, exist_ok=True)
     con = db.connect()
     try:
@@ -67,6 +84,8 @@ def init_db(db: DB) -> None:
 
 
 def insert_event(con: sqlite3.Connection, ticket_id: str, level: str, module: str, message: str) -> None:
+    """Insert a ticket event row (used for SSE and audit trail)."""
+
     con.execute(
         "INSERT INTO ticket_events(ticket_id, ts, level, module, message) VALUES(?,?,?,?,?)",
         (ticket_id, now_iso(), level, module, message),
@@ -83,6 +102,8 @@ def upsert_ticket(
     description: str,
     status: str,
 ) -> None:
+    """Insert a new ticket or update an existing one with the same id."""
+
     now = now_iso()
     con.execute(
         """
@@ -110,6 +131,8 @@ def update_ticket_processing(
     status: str,
     receipt: str | None,
 ) -> None:
+    """Update processing fields after classification/routing."""
+
     now = now_iso()
     con.execute(
         """

@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+"""
+JSON-based ticket store for the desktop client.
+
+The desktop client uses a single JSON file (sample_tickets.json) as:
+- template source (templates)
+- local ticket history (tickets)
+- offline upload queue when the backend is unavailable (pending)
+- small counters used by the UI (stats)
+
+The store functions are defensive and raise SampleTicketsError with
+machine-readable reason codes.
+"""
+
 import json
 import uuid
 from dataclasses import dataclass
@@ -8,15 +21,21 @@ from pathlib import Path
 
 
 def now_iso() -> str:
+    """Return a local timezone ISO-8601 timestamp."""
+
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 class SampleTicketsError(RuntimeError):
+    """Raised when the sample ticket store cannot be read or validated."""
+
     pass
 
 
 @dataclass(frozen=True)
 class Template:
+    """Ticket template used by the generator."""
+
     template_id: str
     channel: str
     title: str
@@ -25,6 +44,8 @@ class Template:
 
 
 def _default_store() -> dict:
+    """Create an empty store structure."""
+
     return {
         "version": 1,
         "templates": [],
@@ -35,6 +56,8 @@ def _default_store() -> dict:
 
 
 def _read_json(path: Path) -> object:
+    """Read and parse JSON from a file, raising SampleTicketsError on failures."""
+
     try:
         raw = path.read_text(encoding="utf-8")
     except FileNotFoundError as e:
@@ -48,6 +71,8 @@ def _read_json(path: Path) -> object:
 
 
 def load_store(path: Path) -> dict:
+    """Load and validate the store structure from a JSON file."""
+
     obj = _read_json(path)
     if not isinstance(obj, dict):
         raise SampleTicketsError("sample_tickets_invalid_format: expected_object")
@@ -65,6 +90,8 @@ def load_store(path: Path) -> dict:
 
 
 def save_store(path: Path, store: dict) -> None:
+    """Atomically write store to disk."""
+
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     data = json.dumps(store, ensure_ascii=False, indent=2)
@@ -73,6 +100,8 @@ def save_store(path: Path, store: dict) -> None:
 
 
 def ensure_store(path: Path) -> dict:
+    """Ensure the store exists. If missing, create a default store with templates."""
+
     if path.exists():
         return load_store(path)
 

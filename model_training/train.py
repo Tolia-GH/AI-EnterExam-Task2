@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+"""
+Local topic model training (Multinomial Naive Bayes).
+
+This script trains a lightweight topic classifier on a small CSV dataset and
+exports a JSON model artifact consumed by the backend and PoC pipeline.
+
+Inputs:
+- data/labeled_tickets.csv
+
+Outputs:
+- model_service/model.json
+- model_training/training_report.json
+
+The implementation uses only the Python standard library to keep the project
+self-contained for exam evaluation.
+"""
+
 import argparse
 import csv
 import json

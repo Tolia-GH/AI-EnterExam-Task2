@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+"""
+Background ticket processing worker.
+
+Responsibilities:
+- Poll NEW tickets from SQLite
+- Perform topic classification (local NB model) and risk evaluation (local rules)
+- Apply routing rules and status transitions
+- Optionally generate a user-facing receipt using an external LLM (PII masked)
+- Emit events into SQLite and fan-out via an in-process PubSub for SSE consumers
+"""
+
 import queue
 import sqlite3
 import threading
@@ -16,6 +27,8 @@ from .settings import Settings
 
 @dataclass(frozen=True)
 class Event:
+    """Single SSE/event payload produced by the worker."""
+
     ticket_id: str
     ts: str
     level: str
@@ -24,22 +37,30 @@ class Event:
 
 
 class PubSub:
+    """In-process pub/sub used to broadcast worker events to SSE connections."""
+
     def __init__(self):
         self._lock = threading.Lock()
         self._subs: list[queue.Queue[Event]] = []
 
     def subscribe(self) -> queue.Queue[Event]:
+        """Subscribe to events; the caller must later unsubscribe."""
+
         q: queue.Queue[Event] = queue.Queue()
         with self._lock:
             self._subs.append(q)
         return q
 
     def unsubscribe(self, q: queue.Queue[Event]) -> None:
+        """Remove a previously subscribed queue."""
+
         with self._lock:
             if q in self._subs:
                 self._subs.remove(q)
 
     def publish(self, ev: Event) -> None:
+        """Publish an event to all subscribers (best effort)."""
+
         with self._lock:
             subs = list(self._subs)
         for q in subs:
@@ -50,6 +71,8 @@ class PubSub:
 
 
 def _select_pending(con: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
+    """Select NEW tickets to be processed."""
+
     cur = con.execute(
         "SELECT * FROM tickets WHERE status='NEW' ORDER BY created_at ASC LIMIT ?",
         (limit,),
@@ -58,6 +81,8 @@ def _select_pending(con: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
 
 
 def _auto_receipt(topic: str) -> str:
+    """Deterministic fallback receipt used when LLM is disabled/unavailable."""
+
     if topic == "order_delivery":
         return (
             "We have processed your request automatically. "
@@ -68,6 +93,8 @@ def _auto_receipt(topic: str) -> str:
 
 
 class TicketWorker:
+    """Worker loop that continuously processes tickets until stop() is called."""
+
     def __init__(self, settings: Settings, db: DB, rules: RoutingRules, pubsub: PubSub):
         self._settings = settings
         self._db = db
@@ -87,6 +114,8 @@ class TicketWorker:
             )
 
     def start(self) -> None:
+        """Start the background worker thread (idempotent)."""
+
         if self._thread is not None:
             return
         t = threading.Thread(target=self._run, daemon=True)
@@ -94,14 +123,20 @@ class TicketWorker:
         t.start()
 
     def stop(self) -> None:
+        """Stop the worker and join the thread briefly."""
+
         self._stop.set()
         if self._thread is not None:
             self._thread.join(timeout=2)
 
     def _emit(self, ticket_id: str, ts: str, level: str, module: str, message: str) -> None:
+        """Publish an in-memory event for SSE listeners."""
+
         self._pubsub.publish(Event(ticket_id=ticket_id, ts=ts, level=level, module=module, message=message))
 
     def _run(self) -> None:
+        """Main worker loop."""
+
         while not self._stop.is_set():
             con = self._db.connect()
             try:

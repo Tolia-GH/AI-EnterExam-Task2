@@ -77,14 +77,14 @@
 
 ```mermaid
 flowchart LR
-  A[Desktop client / API caller] --> B[REST: POST /tickets]
-  B --> C[(SQLite: tickets + events)]
+  A[Desktop client or API caller] --> B[REST: POST /tickets]
+  B --> C[SQLite: tickets and events]
   B --> D[Worker loop]
   D --> E[PII mask + risk signals]
   E --> F[Topic classifier (NB)]
   F --> G[Routing policy]
   G -->|safe| H[Auto-resolve]
-  G -->|risky/low conf| I[Escalate (PENDING_REVIEW)]
+  G -->|risky or low confidence| I[Escalate to PENDING_REVIEW]
   H --> K[Reply generator (LLM optional)]
   K --> C
   I --> C

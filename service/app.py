@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+"""
+Backend ticket service (FastAPI).
+
+This module exposes a minimal REST API for ticket ingestion and querying, plus an
+SSE stream for realtime UI updates.
+
+The processing itself is performed by a background worker:
+- topic classification (local NB model)
+- risk policy evaluation (local rules)
+- routing decision and status transitions
+- optional response generation via external LLM (fallback to templates)
+"""
+
 import json
 import queue
 import sqlite3
@@ -17,6 +30,8 @@ from .worker import PubSub, TicketWorker
 
 
 def _iso_now() -> str:
+    """Return an ISO-8601 timestamp in UTC."""
+
     return datetime.now(timezone.utc).isoformat()
 
 
@@ -33,6 +48,8 @@ app = FastAPI(title="Ticket Automation Service", version="0.1")
 
 
 def _row_to_ticket(r: sqlite3.Row) -> TicketResponse:
+    """Convert a DB row into a typed API response model."""
+
     return TicketResponse(
         ticket_id=str(r["ticket_id"]),
         created_at=str(r["created_at"]),

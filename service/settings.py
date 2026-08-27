@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+"""
+Backend settings loader.
+
+Settings are loaded from:
+- runtime_config defaults (config/runtime.json)
+- environment variables as overrides for operational flexibility
+
+This module intentionally keeps configuration parsing simple and explicit.
+"""
+
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,6 +19,8 @@ from runtime_config import load_runtime_config
 
 @dataclass(frozen=True)
 class Settings:
+    """Resolved settings used by the backend service and worker."""
+
     project_root: Path
     db_path: Path
     routing_rules_path: Path
@@ -21,6 +33,8 @@ class Settings:
 
 
 def load_settings() -> Settings:
+    """Load settings with env overrides and resolve all paths to absolute paths."""
+
     project_root = Path(__file__).resolve().parent.parent
     rc = load_runtime_config()
 

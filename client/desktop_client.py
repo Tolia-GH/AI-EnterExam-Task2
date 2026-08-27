@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+"""
+Desktop client (Tkinter) for the ticket automation PoC.
+
+Features:
+- Generate tickets from a local JSON store (templates)
+- Submit tickets to the backend via HTTP
+- Offline buffering when backend is unavailable (pending queue in the same JSON store)
+- Flush pending tickets automatically on recovery
+- Subscribe to backend SSE events and update UI counters
+
+This client intentionally uses only the Python standard library.
+"""
+
 import argparse
 import json
 import queue

@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+"""
+Core PoC pipeline implementation.
+
+This module implements a minimal end-to-end pipeline used by the CLI PoC:
+- PII masking (for auditability and safe external integrations)
+- Topic classification (Local NB model with rule-based fallback)
+- Risk classification (local policy rules)
+- Lightweight retrieval (Jaccard token overlap over a tiny JSON KB)
+- Decision engine (route-to-human vs auto-suggest)
+- Audit record generation (JSON-serializable dataclasses)
+
+The code is intentionally simple and deterministic to be easy to audit.
+"""
+
 import json
 import math
 import re
@@ -16,6 +30,8 @@ from service.model_infer import LocalNBTopicModel
 
 @dataclass(frozen=True)
 class Ticket:
+    """Normalized ticket structure used by the PoC pipeline."""
+
     ticket_id: str
     channel: str
     created_at: str
@@ -27,6 +43,8 @@ class Ticket:
 
 @dataclass(frozen=True)
 class Evidence:
+    """Retrieval evidence item returned by retrieve_topk()."""
+
     source: str
     doc_id: str
     title: str
@@ -35,6 +53,8 @@ class Evidence:
 
 @dataclass(frozen=True)
 class Decision:
+    """Pipeline decision returned for each processed ticket."""
+
     topic: str
     risk_level: str
     confidence: float
@@ -46,6 +66,8 @@ class Decision:
 
 @dataclass(frozen=True)
 class AuditRecord:
+    """Audit record written to JSONL for each processed ticket."""
+
     audit_id: str
     timestamp: str
     ticket_id: str
@@ -62,6 +84,8 @@ class AuditRecord:
 
 
 def normalize_ticket(raw: dict) -> Ticket:
+    """Convert an input dict into a Ticket with normalized string fields."""
+
     return Ticket(
         ticket_id=str(raw.get("ticket_id", "")),
         channel=str(raw.get("channel", "")),
@@ -79,6 +103,8 @@ _CARD_RE = re.compile(r"(?<!\d)(\d{16,19})(?!\d)")
 
 
 def mask_pii(text: str) -> str:
+    """Mask common PII patterns (phone/email/card) in a free-form text."""
+
     text = _PHONE_RE.sub("1**********", text)
     text = _EMAIL_RE.sub("***@***", text)
     text = _CARD_RE.sub("****************", text)
@@ -86,6 +112,8 @@ def mask_pii(text: str) -> str:
 
 
 def contains_pii(text: str) -> bool:
+    """Return True if the text contains PII patterns (phone/email/card)."""
+
     return bool(_PHONE_RE.search(text) or _EMAIL_RE.search(text) or _CARD_RE.search(text))
 
 
@@ -94,6 +122,8 @@ _NB_MODEL_ERROR: str | None = None
 
 
 def _get_nb_model() -> LocalNBTopicModel | None:
+    """Lazily load the local NB topic model once per process."""
+
     global _NB_MODEL
     global _NB_MODEL_ERROR
 
@@ -116,6 +146,8 @@ def _get_nb_model() -> LocalNBTopicModel | None:
 
 
 def _classify_topic_rule(text: str) -> tuple[str, float]:
+    """Rule-based topic classification using keyword counts (fallback baseline)."""
+
     scores: dict[str, int] = {}
     for topic, keywords in config.TOPIC_KEYWORDS.items():
         scores[topic] = sum(1 for kw in keywords if kw in text)
@@ -140,6 +172,16 @@ def _classify_topic_rule(text: str) -> tuple[str, float]:
 
 
 def classify_topic(text: str) -> tuple[str, float, str, list[str]]:
+    """
+    Classify a ticket into a topic and produce a confidence score.
+
+    Returns:
+    - topic: normalized label (or "other")
+    - confidence: [0, 1]
+    - source: model identifier ("local_nb:<version>" or "rule_fallback")
+    - errors: non-fatal errors for audit visibility (model missing, infer error, etc.)
+    """
+
     errors: list[str] = []
     model = _get_nb_model()
     if model is not None:
@@ -158,6 +200,8 @@ def classify_topic(text: str) -> tuple[str, float, str, list[str]]:
 
 
 def classify_risk(text: str) -> str:
+    """Classify risk level using local policy rules (PII/keywords)."""
+
     if contains_pii(text):
         return "risky"
     if any(kw in text for kw in config.RISKY_KEYWORDS):
@@ -169,21 +213,29 @@ _TOKEN_RE = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]")
 
 
 def _tokenize(text: str) -> set[str]:
+    """Tokenize a text for simple lexical retrieval (Latin alnum + CJK chars)."""
+
     return set(t.lower() for t in _TOKEN_RE.findall(text))
 
 
 def _jaccard(a: set[str], b: set[str]) -> float:
+    """Compute Jaccard similarity for two token sets."""
+
     if not a and not b:
         return 0.0
     return len(a & b) / float(len(a | b))
 
 
 def load_kb(path: str | Path) -> list[dict]:
+    """Load a JSON KB file (list of documents)."""
+
     p = Path(path)
     return json.loads(p.read_text(encoding="utf-8"))
 
 
 def retrieve_topk(query: str, kb_docs: list[dict], k: int = 3) -> list[Evidence]:
+    """Return top-k KB documents by Jaccard token overlap as lightweight evidence."""
+
     q = _tokenize(query)
     scored: list[Evidence] = []
     for d in kb_docs:
@@ -204,6 +256,8 @@ def retrieve_topk(query: str, kb_docs: list[dict], k: int = 3) -> list[Evidence]
 
 
 def decide_action(topic: str, risk_level: str, confidence: float) -> tuple[str, str]:
+    """Decide routing action and reason code based on topic/risk/confidence."""
+
     if risk_level == "risky":
         if topic == "payment":
             return "ROUTE_TO_HUMAN_PAYMENT", "risky_policy"
@@ -218,6 +272,8 @@ def decide_action(topic: str, risk_level: str, confidence: float) -> tuple[str, 
 
 
 def draft_reply(ticket: Ticket, topic: str, evidence: list[Evidence]) -> str:
+    """Generate a deterministic draft reply for AUTO_SUGGEST mode (no LLM)."""
+
     top = evidence[0].title if evidence else "a relevant help article"
     if topic == "order_delivery":
         return (
@@ -246,6 +302,8 @@ def process_ticket(
     ticket: Ticket,
     kb_docs: list[dict],
 ) -> tuple[Decision, AuditRecord]:
+    """Run the end-to-end PoC pipeline for a single ticket."""
+
     topic, confidence, topic_source, errors = classify_topic(ticket.text)
     risk_level = classify_risk(ticket.text)
     preferred_kb = [d for d in kb_docs if str(d.get("category", "")) == topic]
@@ -294,6 +352,8 @@ def process_ticket(
 
 
 def append_audit_record(path: str | Path, record: AuditRecord) -> None:
+    """Append a single audit record to a JSONL file."""
+
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("a", encoding="utf-8") as f:
@@ -301,8 +361,12 @@ def append_audit_record(path: str | Path, record: AuditRecord) -> None:
 
 
 def now_iso() -> str:
+    """Return an ISO-8601 timestamp in UTC."""
+
     return datetime.now(timezone.utc).isoformat()
 
 
 def new_audit_id() -> str:
+    """Generate a random audit record id."""
+
     return uuid.uuid4().hex

@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+"""
+Form builder persistence for the desktop client.
+
+This module stores user-defined ticket forms in a local SQLite DB.
+The desktop UI allows users to create/edit forms and validate inputs before
+generating a ticket payload.
+
+The module also exposes a small client_kv table used to store UI settings.
+"""
+
 import json
 import re
 import sqlite3
@@ -8,6 +18,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FieldDef:
+    """Single form field definition."""
+
     field_id: str
     label: str
     field_type: str
@@ -18,12 +30,16 @@ class FieldDef:
 
 @dataclass(frozen=True)
 class FormDef:
+    """Form definition consisting of multiple fields."""
+
     form_id: int | None
     name: str
     fields: list[FieldDef]
 
 
 def init_tables(con: sqlite3.Connection) -> None:
+    """Initialize tables required for forms persistence."""
+
     con.execute(
         """
         CREATE TABLE IF NOT EXISTS ticket_forms (
@@ -45,6 +61,8 @@ def init_tables(con: sqlite3.Connection) -> None:
 
 
 def validate_form(form: FormDef) -> list[str]:
+    """Validate a form definition and return a list of errors."""
+
     errors: list[str] = []
     if not form.name.strip():
         errors.append("Form name must not be empty")
@@ -75,6 +93,8 @@ def validate_form(form: FormDef) -> list[str]:
 
 
 def _to_json(form: FormDef) -> str:
+    """Serialize a form definition to a JSON string."""
+
     payload = {
         "name": form.name,
         "fields": [

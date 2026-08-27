@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""
+Simple load test script for the backend service.
+
+This script sends many POST /tickets requests concurrently and reports success
+rate and approximate QPS.
+"""
+
 import argparse
 import json
 import threading

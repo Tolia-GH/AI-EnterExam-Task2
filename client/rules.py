@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+"""
+Rule configuration for ticket generation (desktop client).
+
+Rules are stored in a small local SQLite DB used by the desktop client UI.
+They are used to:
+- match a generated ticket (by channel/topic_hint/keywords)
+- override default fields (submitter/title/description) using templates
+"""
+
 import json
 import sqlite3
 from dataclasses import dataclass
@@ -7,6 +16,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class TicketGenRule:
+    """Rule definition used by the generator."""
+
     rule_id: int | None
     name: str
     enabled: bool
@@ -21,6 +32,8 @@ class TicketGenRule:
 
 
 def init_tables(con: sqlite3.Connection) -> None:
+    """Initialize tables required for rules persistence."""
+
     con.execute(
         """
         CREATE TABLE IF NOT EXISTS ticket_gen_rules (
@@ -42,6 +55,8 @@ def init_tables(con: sqlite3.Connection) -> None:
 
 
 def validate_rule(rule: TicketGenRule) -> list[str]:
+    """Validate a rule and return a list of human-readable errors."""
+
     errors: list[str] = []
     if not rule.name.strip():
         errors.append("Rule name must not be empty")
@@ -70,6 +85,8 @@ def validate_rule(rule: TicketGenRule) -> list[str]:
 
 
 def list_rules(con: sqlite3.Connection) -> list[TicketGenRule]:
+    """Return all rules ordered by priority descending."""
+
     cur = con.execute(
         """
         SELECT rule_id,name,enabled,priority,channel,keywords_json,topic_hint,submitter,title_template,description_template,route_hint

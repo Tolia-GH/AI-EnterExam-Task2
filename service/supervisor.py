@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""
+Simple supervisor for running the backend as a daemon-like process.
+
+This script launches uvicorn and restarts it if the process exits.
+It is intentionally minimal (no external dependencies) and suitable for PoC demos.
+"""
+
 import argparse
 import os
 import subprocess
@@ -12,14 +19,20 @@ from runtime_config import load_runtime_config
 
 
 def _now() -> str:
+    """Return a local timezone ISO-8601 timestamp."""
+
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 def _log(level: str, module: str, message: str) -> None:
+    """Emit a standardized workflow log line."""
+
     print(f"[{_now()}] [{level}] [{module}] {message}")
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI args with defaults from runtime_config."""
+
     rc = load_runtime_config()
     p = argparse.ArgumentParser()
     p.add_argument("--host", default=rc.backend_host)
@@ -30,6 +43,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Run uvicorn under supervision with auto-restart."""
+
     args = parse_args()
     project_root = Path(__file__).resolve().parent.parent
     os.environ.setdefault("PYTHONPATH", str(project_root))
